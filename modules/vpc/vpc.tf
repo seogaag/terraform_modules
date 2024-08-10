@@ -1,11 +1,11 @@
-provider "aws" {
-  region = var.region
-  default_tags {
-    tags = {
-      Name = "VPC-001109"
-    }
-  }  
-}
+# provider "aws" {
+#   region = var.region
+#   default_tags {
+#     tags = {
+#       Name = "VPC-001109"
+#     }
+#   }  
+# }
 
 ## vpc ##
 resource "aws_vpc" "my_vpc" {
@@ -116,7 +116,7 @@ resource "aws_nat_gateway" "ngw_c" {
 # public routing table
 resource "aws_route_table" "rt_pub" {
   vpc_id = aws_vpc.my_vpc.id
-  route = {
+  route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.my_igw.id
   }
@@ -128,9 +128,9 @@ resource "aws_route_table" "rt_pub" {
 # private nat routing table
 resource "aws_route_table" "rt_prv_nat_a" {
   vpc_id = aws_vpc.my_vpc.id
-  route = {
+  route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.ngw_a.id
+    gateway_id = aws_nat_gateway.ngw_a.id
   }
   tags = {
     Name = "RT-001109-prv-nat-a"
@@ -138,9 +138,9 @@ resource "aws_route_table" "rt_prv_nat_a" {
 }
 resource "aws_route_table" "rt_prv_nat_c" {
   vpc_id = aws_vpc.my_vpc.id
-  route = {
+  route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.ngw_c.id
+    gateway_id = aws_nat_gateway.ngw_c.id
   }
   tags = {
     Name = "RT-001109-prv-nat-c"
@@ -171,9 +171,9 @@ resource "aws_route_table_association" "rt_prv_nat_a_asso" {
   subnet_id = aws_subnet.sub_prv_nat_a.id
   route_table_id = aws_route_table.rt_prv_nat_a.id
 }
-# rt_prv_nat_a asso
+# rt_prv_nat_c asso
 resource "aws_route_table_association" "rt_prv_nat_c_asso" {
-  subnet_id = aws_route_table.rt_prv_nat_c.id
+  subnet_id = aws_subnet.sub_prv_nat_c.id
   route_table_id = aws_route_table.rt_prv_nat_c.id
 }
 

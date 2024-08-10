@@ -1,4 +1,4 @@
-variable "ami" {
+variable "ami_id" {
   description = "ami (default: Amazone Linux)"
   type = string
   default = "ami-0790a5dc816e4a98f"
@@ -18,10 +18,6 @@ variable "instance_type" {
 
 variable "subnet_id" {
   type = string
-}
-
-variable "vpc_sg_ids" {
-  type = list
 }
 
 variable "keypair_name" {
