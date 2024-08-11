@@ -26,6 +26,7 @@ resource "aws_subnet" "sub_pub_a" {
   map_public_ip_on_launch = true
   tags = {
     Name = var.subnet_names[0]
+    "kubernetes.io/role/elb" = "1"
   }
 }
 resource "aws_subnet" "sub_pub_c" {
@@ -35,6 +36,7 @@ resource "aws_subnet" "sub_pub_c" {
   map_public_ip_on_launch = true
   tags = {
     Name = var.subnet_names[1]
+    "kubernetes.io/role/elb" = "1"
   }
 }
 
@@ -46,6 +48,7 @@ resource "aws_subnet" "sub_prv_nat_a" {
   map_public_ip_on_launch = true
   tags = {
     Name = var.subnet_names[2]
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 resource "aws_subnet" "sub_prv_nat_c" {
@@ -55,6 +58,7 @@ resource "aws_subnet" "sub_prv_nat_c" {
   map_public_ip_on_launch = true
   tags = {
     Name = var.subnet_names[3]
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 
