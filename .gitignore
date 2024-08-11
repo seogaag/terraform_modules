@@ -2,7 +2,7 @@ main.tf
 
 # 모든 .terraform 디렉토리 무시
 **.terraform/
-**ecs/
+
 # 특정 Terraform 상태 파일과 락 파일 무시
 *.tfstate
 *.tfstate.*
