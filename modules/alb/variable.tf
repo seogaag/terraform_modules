@@ -40,3 +40,12 @@ variable "sg_allow_comm_list" {
   type = list
   default = ["0.0.0.0/0"]
 }
+
+variable "instance_ids" {
+  type = list
+}
+
+variable "availability_zone" {
+    type = string
+    default = ""
+}

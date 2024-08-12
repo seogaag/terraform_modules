@@ -26,6 +26,18 @@ resource "aws_lb_target_group" "target_group" {
   }
 }
 
+resource "aws_lb_target_group_attachment" "target-group-attachment" {
+  count = length(var.instance_ids)
+  target_group_arn = aws_lb_target_group.target-group.arn
+  target_id        = var.instance_ids[count.index]
+  port             = var.port
+  
+  availability_zone = var.availability_zone
+  
+  depends_on =[aws_lb_target_group.target-group]
+}
+
+
 ## ALB listener 80->443->SSL
 resource "aws_lb_listener" "lb_listener_443" {
   load_balancer_arn = aws_lb.alb-internal_facing.arn

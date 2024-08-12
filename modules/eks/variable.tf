@@ -24,10 +24,6 @@ variable "node_sub_ids" {
   type= list(string)
 }
 
-variable "security_group_ids" {
-  type = list(string)
-}
-
 variable "vpc_id" {
   type = string
 }
