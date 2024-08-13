@@ -1,7 +1,7 @@
 # S3 Bucket 생성
 resource "aws_s3_bucket" "stock_data" {
 #   bucket_prefix = "stock-data-"
-    bucket = var.bucket_name_raw
+    bucket = var.bucket_name
 }
 
 # Lambda 역할 생성
