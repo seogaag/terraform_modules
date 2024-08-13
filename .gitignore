@@ -1,4 +1,5 @@
-main.tf
+# main.tf
+source/bastionhost.sh
 
 # 모든 .terraform 디렉토리 무시
 **.terraform/
@@ -9,4 +10,4 @@ main.tf
 .tfstate.lock.info
 .terraform.lock.hcl
 
-*security_group*
+.security_group

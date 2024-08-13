@@ -52,3 +52,7 @@ variable "sg_cidr_blocks" {
   type = list(string)
   default = [ "0.0.0.0/0" ]
 }
+
+variable "ec2_security_group_ids" {
+  type = list(string)
+}

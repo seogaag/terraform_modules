@@ -13,29 +13,6 @@ resource "aws_eks_cluster" "eks_cluster" {
   ]
 }
 
-
-# ## Security Group
-# resource "aws_security_group" "sg_eks" {
-#   vpc_id = var.vpc_id
-  
-#   dynamic "ingress" {
-#     for_each = ["tcp", "udp", "icmp"]
-#     content {
-#       from_port = 0
-#       to_port = 0
-#       protocol = ingress.value
-#       cidr_blocks = var.sg_cidr_blocks
-#     }
-
-#   }
-#   egress {
-#     from_port = 0
-#     to_port = 0
-#     protocol = "-1"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
-# }
-
 resource "aws_eks_node_group" "eks_nodegroup" {
   cluster_name = aws_eks_cluster.eks_cluster.name
   node_group_name = var.eks_node_group_name
