@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "eks_cluster_role" {
-  name = "001109-eks-cluster-iam-role"
+  name = "${var.eks_cluster_name}-iam-role"
 #   assume_role_policy = data.aws_iam_policy_document.assume_role.json
   assume_role_policy = jsonencode({
     Statement = [{
@@ -39,7 +39,7 @@ resource "aws_iam_role_policy_attachment" "iam-AmazonEKSVPCResourceController" {
 #####
 
 resource "aws_iam_role" "eks_node_role" {
-  name = "001109-eks-node-iam-role"
+  name = "${var.eks_node_group_name}-iam-role"
 
   assume_role_policy = jsonencode({
     Statement = [{
@@ -59,9 +59,10 @@ resource "aws_iam_role_policy_attachment" "iam-AmazonEKSWorkerNodePolicy" {
 }
 
 resource "aws_iam_role_policy_attachment" "iam-AmazonEKS_CNI_Policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
   role = aws_iam_role.eks_node_role.name
 }
+
 
 resource "aws_iam_role_policy_attachment" "iam-AmazonEC2ContainerRegistryReadOnly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
