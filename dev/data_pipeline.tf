@@ -1,11 +1,11 @@
-# ## DATA STORAGE
-# module "lambda_stock_data_storage" {
-#   source = "../modules/lambda"
-#   bucket_name = "esia-stock-raw"
-#   lambda_function_name = "stock_price_collector"
-#   api_key = "WVNLKV1T1O1GZ7ZG"
-#   symbols = "AAPL,GOOGL,AMZN,TSLA"
-# }
+## DATA STORAGE
+module "lambda_stock_data_storage" {
+  source = "../modules/lambda"
+  bucket_name = "esia-stock-raw"
+  lambda_function_name = "stock_price_collector"
+  api_key = "WVNLKV1T1O1GZ7ZG"
+  symbols = "AAPL,GOOGL,AMZN,TSLA"
+}
 
 # ## DATA ETL
 # module "glue" {

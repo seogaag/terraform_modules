@@ -41,3 +41,24 @@ variable "sg_cidr_blocks" {
 variable "eks_security_groups_ids" {
   type = list(string)
 }
+
+# variable "eks_node_desired_size"{
+#   type = number
+#   default = 2
+# }
+
+# variable "eks_node_max_size"{
+#   type = number
+#   default = 5
+# }
+
+# variable "eks_node_min_size"{
+#   type = number
+#   default = 1
+# }
+
+variable "eks_node_scaling_config" {
+  description = "desired/max/min_size"
+  type = list(number)
+  default = [ 2,5,1 ]
+}

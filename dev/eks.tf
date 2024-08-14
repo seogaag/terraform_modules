@@ -37,25 +37,30 @@
 
 #   node_sub_ids = [module.vpc.sub_pub_a_id, module.vpc.sub_pub_c_id]
 #   node_disk_size = 100
+
+#   # desired/max/min_size
+#   eks_node_scaling_config = [2,5,1]
 # }
 
-# module "instance" {
-#   source = "../modules/instance"
+# # module "instance" {
+# #   source = "../modules/instance"
 
-#   ec2_name = "EC2-bastionhost"
-#   ami_id = "ami-0790a5dc816e4a98f"
-#   associate_public_ip_address = true
-#   instance_type = "t3.micro"
+# #   ec2_name = "EC2-bastionhost"
+# #   ami_id = "ami-0790a5dc816e4a98f"
+# #   associate_public_ip_address = true
+# #   instance_type = "t3.micro"
 
-#   vpc_id = module.vpc.vpc_id
-#   subnet_id = module.vpc.sub_pub_a_id
+# #   vpc_id = module.vpc.vpc_id
+# #   subnet_id = module.vpc.sub_pub_a_id
 
-#   keypair_name = "KEYPAIR-001109-H"
-#   ec2_volume_size = 20
-#   user_data = file("../source/bastionhost.sh")
+# #   keypair_name = "KEYPAIR-001109-H"
+# #   ec2_volume_size = 20
+# #   user_data = templatefile("../source/bastionhost.tpl",
+#   #   {
+#   #   })
   
-#   ec2_security_group_ids = [ module.eks_sg.security_group_id ]
-# }
+# #   ec2_security_group_ids = [ module.eks_sg.security_group_id ]
+# # }
 
 # resource "aws_security_group_rule" "allow_all" {
 #   type        = "ingress"
@@ -64,5 +69,5 @@
 #   protocol    = "-1"
 #   cidr_blocks = ["0.0.0.0/0"]
 
-#   security_group_id = "sg-05b943b663fbbd280"
+#   security_group_id = "sg-08015d45ecd94355c"
 # }
