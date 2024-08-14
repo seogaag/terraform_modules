@@ -1,6 +1,5 @@
 # S3 Bucket 생성
-resource "aws_s3_bucket" "stock_data" {
-#   bucket_prefix = "stock-data-"
+resource "aws_s3_bucket" "lambda_bucket" {
     bucket = var.bucket_name
 }
 
@@ -24,7 +23,7 @@ resource "aws_iam_role" "lambda_role" {
 
 # Lambda 역할 정책 생성
 resource "aws_iam_role_policy" "lambda_policy" {
-  name   = "lambda_policy"
+  name   = "${var.service}_lambda_policy"
   role   = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
@@ -35,7 +34,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "s3:PutObject"
         ],
         Effect   = "Allow",
-        Resource = "${aws_s3_bucket.stock_data.arn}/*"
+        Resource = "${aws_s3_bucket.lambda_bucket.arn}/*"
       },
       {
         Action   = "logs:*",
@@ -47,38 +46,38 @@ resource "aws_iam_role_policy" "lambda_policy" {
 }
 
 # Lambda 함수 생성
-resource "aws_lambda_function" "stock_collector" {
-  filename         = "../source/lambda_function.zip"
+resource "aws_lambda_function" "lambda_function" {
+  filename         = "${var.source_path}/${var.lambda_function_name}_payload.zip"
   function_name    = var.lambda_function_name
   role             = aws_iam_role.lambda_role.arn
-  handler          = "lambda_function.lambda_handler"
-  runtime          = "python3.8"
-  source_code_hash = filebase64sha256("../source/lambda_function.zip")
+  handler          = "${var.lambda_function_name}.${var.lambda_function_name}"
+  runtime          = var.lambda_runtime
+  source_code_hash = filebase64sha256("${var.source_path}/${var.lambda_function_name}_payload.zip")
 
   environment {
-    variables = {
-      API_KEY = var.api_key
-      SYMBOL  = var.symbols
-    }
+    variables = var.lambda_env
   }
+
+  memory_size = var.memory_size
+  timeout     = var.timeout
 }
 
 # Lambda 함수에 대한 CloudWatch Event 규칙 생성
-resource "aws_cloudwatch_event_rule" "every_hour" {
-  name        = "every-hour"
-  schedule_expression = "rate(1 hour)"
+resource "aws_cloudwatch_event_rule" "cloudwatch_event_rule" {
+  name        = "${var.service}_clodwatch_event_rule"
+  schedule_expression = var.cloudwatch_schedule # "rate(1 hour)"
 }
 
 resource "aws_cloudwatch_event_target" "lambda_target" {
-  rule      = aws_cloudwatch_event_rule.every_hour.name
-  arn       = aws_lambda_function.stock_collector.arn
+  rule      = aws_cloudwatch_event_rule.cloudwatch_event_rule.name
+  arn       = aws_lambda_function.lambda_function.arn
 
 }
 
 # Lambda 함수 권한 추가
 resource "aws_lambda_permission" "allow_cloudwatch" {
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.stock_collector.function_name
+  function_name = aws_lambda_function.lambda_function.function_name
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.every_hour.arn
+  source_arn    = aws_cloudwatch_event_rule.cloudwatch_event_rule.arn
 }

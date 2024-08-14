@@ -1,11 +1,38 @@
+## destroy
+# aws s3 rm s3://esia-stock-raw-1 --recursive
+
 ## DATA STORAGE
-module "lambda_stock_data_storage" {
-  source = "../modules/lambda"
-  bucket_name = "esia-stock-raw"
-  lambda_function_name = "stock_price_collector"
-  api_key = "WVNLKV1T1O1GZ7ZG"
-  symbols = "AAPL,GOOGL,AMZN,TSLA"
-}
+
+# module "lambda_stock_data_storage" {
+#   source = "../modules/lambda"
+
+#   service = "esia"
+#   bucket_name = "esia-stock-raw-1"
+
+#   lambda_function_name = "stock_collector"
+#   lambda_env = {
+#     BUCKET_NAME = module.lambda_stock_data_storage.bucket_name
+#     API_KEY = "WVNLKV1T1O1GZ7ZG"
+#     SYMBOLS  = "AAPL,GOOGL,AMZN,TSLA,IBM"
+#   }
+
+#   cloudwatch_schedule = "rate(1 hour)"
+
+#   memory_size = 256
+#   timeout = 15
+# }
+
+# ########
+# cd source
+# mkdir {lambda_function_name}
+# cd {lambda_function_name}
+# cp ../lambda_function.py .
+# pip install requests -t .
+# pip install urllib3==1.26.7 -t .
+# ~~
+# zip -r ../{lambda_function_name} .
+# #########
+
 
 # ## DATA ETL
 # module "glue" {
