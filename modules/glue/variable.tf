@@ -56,3 +56,15 @@ variable "bucket_name_processed" {
 variable "bucket_name_gluescripts" {
   type = string
 }
+
+variable "glue_s3_resource_arns" {
+  type = list(string)
+}
+
+variable "glue_job_default_arguments" {
+  type = map(string)
+  default = {
+    "--S3_SOURCE_PATH"      = "s3://esia-stock-raw/"
+    "--S3_DESTINATION_PATH" = "s3://esia-stock-processed/"
+  }
+}

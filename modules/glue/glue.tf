@@ -8,7 +8,7 @@ resource "aws_glue_catalog_database" "glue_catalog_database" {
 
 resource "aws_glue_catalog_table" "glue_catalog_table" {
   name          = var.table_name
-  database_name = aws_glue_catalog_database.this.name
+  database_name = aws_glue_catalog_database.glue_catalog_database.name
 
   storage_descriptor {
     dynamic "columns" {
@@ -28,7 +28,7 @@ resource "aws_glue_catalog_table" "glue_catalog_table" {
 resource "aws_glue_crawler" "glue_crawler" {
   name          = var.crawler_name
   role          = aws_iam_role.glue_service_role.arn
-  database_name = aws_glue_catalog_database.this.name
+  database_name = aws_glue_catalog_database.glue_catalog_database.name
 
   s3_target {
     path = var.s3_target_path
@@ -46,6 +46,9 @@ resource "aws_glue_job" "glue_job" {
     python_version  = "3"
   }
   max_capacity = var.max_capacity
+
+  default_arguments = var.glue_job_default_arguments
   
+  glue_version = "3.0"
 }
 

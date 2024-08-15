@@ -30,13 +30,7 @@ resource "aws_iam_policy" "glue_policy" {
           "s3:PutObject",
           "s3:ListBucket"
         ],
-        Resource = [
-          "arn:aws:s3:::stock-data-*",
-          "arn:aws:s3:::raw-stock-data-*",
-          "arn:aws:s3:::processed-stock-data-*",
-          "arn:aws:s3:::glue-scripts-*",
-          "arn:aws:s3:::analysis-results-*"
-        ]
+        Resource = var.glue_s3_resource_arns
       }
     ]
   })
