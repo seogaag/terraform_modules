@@ -4,6 +4,10 @@ locals {
 
 resource "aws_glue_catalog_database" "glue_catalog_database" {
   name = var.database_name
+
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
 
 resource "aws_glue_catalog_table" "glue_catalog_table" {

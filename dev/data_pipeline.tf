@@ -82,10 +82,15 @@ module "glue" {
     "arn:aws:s3:::esia-stock-gluescripts*" # ,
     # "arn:aws:s3:::analysis-results-*"
   ]
-
+  # for_each = toset(["AAPL","GOOGL","AMZN","TSLA","IBM"])
   glue_job_default_arguments = {
-    "--S3_SOURCE_PATH"      = "s3://esia-stock-raw/*"
-    "--S3_DESTINATION_PATH" = "s3://esia-stock-processed/*"
+    # "--S3_SOURCE_PATH"      = "s3://${module.lambda_stock_data_storage.bucket_name}/AAPL/"
+    # "--S3_DESTINATION_PATH" = "s3://esia-stock-processed/AAPL/"
+    "--SOURCE_S3_BUCKET"      = "${module.lambda_stock_data_storage.bucket_name}"
+    "--SOURCE_S3_PREFIX"      = "AAPL/"
+    "--DEST_S3_BUCKET"      = "esia-stock-processed"
+    "--DEST_S3_PREFIX"      = "AAPL/"
+    "--JOB_NAME"            = "esia-etl-job"
   }
   
 }

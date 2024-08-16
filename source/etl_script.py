@@ -1,77 +1,54 @@
-# import sys
-# import boto3
-# from awsglue.utils import getResolvedOptions
-# from awsglue.context import GlueContext
-# from awsglue.job import Job
-# from awsglue.transforms import *
-# from pyspark.context import SparkContext
-# from pyspark.sql import SparkSession
-# from pyspark.sql.functions import col, to_timestamp
-
-# # 스크립트에서 필요한 인자를 가져옵니다.
-# args = getResolvedOptions(sys.argv, ['JOB_NAME', 'S3_SOURCE_PATH', 'S3_DESTINATION_PATH'])
-
-# # Spark 및 Glue 컨텍스트 생성
-# sc = SparkContext()
-# glueContext = GlueContext(sc)
-# spark = glueContext.spark_session
-
-# # Glue 작업 생성
-# job = Job(glueContext)
-# job.init(args['JOB_NAME'], args)
-
-# # S3에서 데이터 읽기
-# source_df = spark.read.format("csv").option("header", "true").load(args['S3_SOURCE_PATH'])
-
-# # 데이터 변환 작업
-# transformed_df = source_df.withColumn("timestamp", to_timestamp(col("timestamp"))) \
-#                            .withColumn("open", col("open").cast("double")) \
-#                            .withColumn("high", col("high").cast("double")) \
-#                            .withColumn("low", col("low").cast("double")) \
-#                            .withColumn("close", col("close").cast("double")) \
-#                            .withColumn("volume", col("volume").cast("bigint"))
-
-# # 변환된 데이터를 S3에 저장
-# transformed_df.write.mode("overwrite").format("parquet").save(args['S3_DESTINATION_PATH'])
-
-# # Glue 작업 완료
-# job.commit()
-
 import sys
 import boto3
-from awsglue.context import GlueContext
-from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
-from pyspark.sql.types import StructType, StructField, StringType, DoubleType, LongType
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from awsglue.utils import getResolvedOptions
+from pyspark.sql import SparkSession
 
-# Arguments
-args = getResolvedOptions(sys.argv, ['S3_SOURCE_PATH', 'S3_DESTINATION_PATH'])
+# 필요한 인자들을 받아옵니다.
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'SOURCE_S3_BUCKET', 'SOURCE_S3_PREFIX', 'DEST_S3_BUCKET', 'DEST_S3_PREFIX'])
 
-# Create Spark and Glue contexts
+# Spark 및 Glue 컨텍스트를 설정합니다.
 sc = SparkContext()
 glueContext = GlueContext(sc)
-spark = glueContext.spark_session
+spark = SparkSession.builder.config("spark.sql.parquet.compression.codec", "gzip").getOrCreate()
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
 
-# Check if arguments are not empty
-source_path = args.get('S3_SOURCE_PATH')
-destination_path = args.get('S3_DESTINATION_PATH')
+# 소스 데이터의 위치를 설정합니다.
+source_path = f"s3://{args['SOURCE_S3_BUCKET']}/{args['SOURCE_S3_PREFIX']}"
 
-if not source_path or not destination_path:
-    raise ValueError("S3_SOURCE_PATH or S3_DESTINATION_PATH is empty")
+# 데이터를 읽어옵니다.
+data_frame = glueContext.create_dynamic_frame_from_options(
+    connection_type="s3",
+    connection_options={"paths": [source_path], "recurse": True},
+    format="json"
+)
 
-# Define schema
-schema = StructType([
-    StructField("timestamp", StringType(), True),
-    StructField("open", DoubleType(), True),
-    StructField("high", DoubleType(), True),
-    StructField("low", DoubleType(), True),
-    StructField("close", DoubleType(), True),
-    StructField("volume", LongType(), True)
-])
+# DynamicFrame을 DataFrame으로 변환합니다.
+df = data_frame.toDF()
 
-# Read CSV data from S3
-df = spark.read.csv(args['S3_SOURCE_PATH'], schema=schema, header=True)
+# 데이터 변환 작업 예제 (예: timestamp를 표준 형식으로 변환)
+from pyspark.sql.functions import col, to_timestamp
 
-# Write data to S3 in Parquet format
-df.write.mode('overwrite').parquet(args['S3_DESTINATION_PATH'])
+df = df.withColumn("timestamp", to_timestamp(col("timestamp"), "yyyy-MM-dd HH:mm:ss"))
+
+# 변환된 DataFrame을 다시 DynamicFrame으로 변환합니다.
+transformed_dynamic_frame = glueContext.create_dynamic_frame_from_catalog(
+    frame=df
+)
+
+# 변환된 데이터를 저장할 위치를 설정합니다.
+dest_path = f"s3://{args['DEST_S3_BUCKET']}/{args['DEST_S3_PREFIX']}"
+
+# 데이터를 S3에 저장합니다.
+glueContext.write_dynamic_frame_from_options(
+    frame=transformed_dynamic_frame,
+    connection_type="s3",
+    connection_options={"path": dest_path},
+    format="json"
+)
+
+# ETL 작업을 완료합니다.
+job.commit()

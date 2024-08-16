@@ -1,29 +1,3 @@
-# import json
-# import boto3
-# import requests
-# from datetime import datetime
-# import os
-
-# s3 = boto3.client('s3')
-# BUCKET_NAME = os.environ['BUCKET_NAME']
-# API_KEY = os.environ['API_KEY']
-# SYMBOLS = os.environ['SYMBOLS'].split(',')
-
-# def lambda_handler(event, context):
-#     for symbol in SYMBOLS:
-#         url = f"https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval=1h&apikey={API_KEY}"
-#         response = requests.get(url)
-#         data = response.json()
-
-#         timestamp = datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')
-#         file_name = f"{symbol}/{timestamp}.json"
-#         s3.put_object(Bucket=BUCKET_NAME, Key=file_name, Body=json.dumps(data))
-
-#     return {
-#         'statusCode': 200,
-#         'body': json.dumps('Data collected and stored successfully')
-#     }
-
 import json
 import boto3
 import requests
@@ -53,12 +27,28 @@ def stock_collector(event, context):
             # 데이터 파싱
             data = response.json()
             
+            # 'Time Series (5min)' 데이터만 추출
+            time_series_data = data.get('Time Series (5min)', {})
+            
+            # 타임스탬프와 관련된 데이터만 포맷팅
+            formatted_data = [
+                {
+                    'timestamp': timestamp,
+                    'open': values.get('1. open'),
+                    'high': values.get('2. high'),
+                    'low': values.get('3. low'),
+                    'close': values.get('4. close'),
+                    'volume': values.get('5. volume')
+                }
+                for timestamp, values in time_series_data.items()
+            ]
+            
             # 파일명에 타임스탬프 추가
             timestamp = datetime.utcnow().strftime('%Y-%m-%d_%H-%M-%S')
             file_name = f"{symbol}/{timestamp}.json"
             
             # S3에 데이터 저장
-            s3.put_object(Bucket=BUCKET_NAME, Key=file_name, Body=json.dumps(data))
+            s3.put_object(Bucket=BUCKET_NAME, Key=file_name, Body=json.dumps(formatted_data))
             
             # 성공 메시지 추가
             results.append({'symbol': symbol, 'file': file_name, 'status': 'success'})
