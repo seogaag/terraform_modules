@@ -2,18 +2,18 @@
 #   region = "ap-southeast-4"
 # }
 
-# module "vpc" {
-#   source = "../modules/vpc"
-#   region = "ap-southeast-4"
-#   vpc_cidr = "10.0.0.0/24"
-#   vpc_name = "vpc-001109"
-#   subnet_names = ["sub-001109-pub-a", "sub-001109-pub-c",
-#                     "sub-001109-prv-nat-a", "sub-001109-prv-nat-c",
-#                     "sub-001109-prv-a", "sub-001109-prv-c"]
-#   igw_name = "igw-001109"
-#   ngw_names = ["ngw-001109-a", "ngw-001109-c"]
+module "vpc" {
+  source = "../modules/vpc"
+  region = "ap-south-1"
+  vpc_cidr = "10.0.10.0/24"
+  vpc_name = "vpc-001109-test"
+  subnet_names = ["sub-001109-pub-a", "sub-001109-pub-c",
+                    "sub-001109-prv-nat-a", "sub-001109-prv-nat-c",
+                    "sub-001109-prv-a", "sub-001109-prv-c"]
+  igw_name = "igw-001109"
+  ngw_names = ["ngw-001109-a", "ngw-001109-c"]
 
-# }
+}
 
 
 # module "eks_sg" {
