@@ -41,6 +41,41 @@ resource "aws_iam_policy" "sagemaker_policy" {
           "logs:PutLogEvents"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sagemaker:CreateTrainingJob",
+          "sagemaker:CreateModel",
+          "sagemaker:CreateEndpointConfig",
+          "sagemaker:CreateEndpoint",
+          "sagemaker:InvokeEndpoint",
+          "sagemaker:CreatePresignedDomainUrl",
+          "sagemaker:AddTags",
+          "sagemaker:ListApps",
+          "sagemaker:ListDomains",
+          "sagemaker:ListUserProfiles",
+          "sagemaker:ListSpaces",
+          "sagemaker:DescribeApp",
+          "sagemaker:DescribeDomain",
+          "sagemaker:DescribeUserProfile",
+          "sagemaker:DescribeSpace",
+          "sagemaker:CreateSpace",
+          "sagemaker:UpdateSpace",
+          "sagemaker:DeleteSpace",
+          "sagemaker:CreateApp",
+          "sagemaker:DeleteApp"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability"
+        ]
+        Resource = "*"
       }
     ]
   })

@@ -18,7 +18,7 @@ def stock_collector(event, context):
 
     # 각 회사 심볼에 대해 주가 데이터 요청
     for symbol in SYMBOLS:
-        url = f"https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={symbol}&interval=5min&apikey={API_KEY}"
+        url = f"https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol={symbol}&outputsize=1&interval=5min&apikey={API_KEY}"
         try:
             # API 요청
             response = requests.get(url)

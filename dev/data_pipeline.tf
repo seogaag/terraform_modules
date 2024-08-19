@@ -11,25 +11,48 @@ locals {
 }
 
 ## DATA STORAGE
+resource "aws_s3_bucket" "s3_stock_raw" {
+  bucket = "esia-stock-raw"
+}
+
+# module "lambda_stock_data_raw" {
+#   source = "../modules/lambda"
+
+#   service = "esia-raw"
+#   bucket_arn = aws_s3_bucket.s3_stock_raw.arn
+
+#   lambda_function_name = "pre_data"
+#   lambda_env = {}
+
+#   memory_size = 256
+#   timeout = 60
+# }
 
 module "lambda_stock_data_storage" {
   source = "../modules/lambda"
 
   # service = "esia"
   service = local.service
-  bucket_name = "esia-stock-raw"
+  bucket_arn = aws_s3_bucket.s3_stock_raw.arn
 
   lambda_function_name = "stock_collector"
   lambda_env = {
-    BUCKET_NAME = module.lambda_stock_data_storage.bucket_name
+    BUCKET_NAME = aws_s3_bucket.s3_stock_raw.bucket
     API_KEY = "WVNLKV1T1O1GZ7ZG"
     SYMBOLS  = "AAPL,GOOGL,AMZN,TSLA,IBM"
   }
 
-  cloudwatch_schedule = "rate(1 hour)"
-
   memory_size = 256
   timeout = 15
+}
+
+module "daily_raw_cloudwatch" {
+  source = "../modules/cloudwatch_event"
+
+  service = local.service
+  cloudwatch_schedule = "rate(1 day)"
+  lambda_function_name = module.lambda_stock_data_storage.lambda_function_name
+  lambda_function_arn = module.lambda_stock_data_storage.lambda_function_arn
 }
 
 # ########

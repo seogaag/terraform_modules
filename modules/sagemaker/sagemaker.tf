@@ -3,7 +3,7 @@ resource "aws_sagemaker_model" "sagemaker_model" {
   execution_role_arn  = aws_iam_role.sagemaker_role.arn
 
   primary_container {
-    image = "381492185710.dkr.ecr.us-west-2.amazonaws.com/sagemaker-deepar:1"
+    image = "991648021394.dkr.ecr.ap-south-1.amazonaws.com/forecasting-deepar:latest"
     model_data_url = "s3://${aws_s3_bucket.sagemaker_bucket.bucket}/model_output/model.tar.gz"
   }
 }
@@ -44,7 +44,6 @@ resource "aws_sagemaker_domain" "sagemaker_domain" {
 resource "aws_sagemaker_user_profile" "example" {
   domain_id          = aws_sagemaker_domain.sagemaker_domain.id
   user_profile_name  = "${var.service}-user-profile"
-#   role_arn           = aws_iam_role.sagemaker_role.arn
 }
 
 resource "aws_sagemaker_notebook_instance" "sagemaker_notebook_instance" {

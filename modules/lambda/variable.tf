@@ -3,20 +3,11 @@ variable "service" {
   default = "esia"
 }
 
-variable "bucket_name" {
-  description = "The name of the S3 bucket"
-  type        = string
-}
-
 variable "lambda_function_name" {
   description = "The name of the Lambda function"
   type        = string
 }
 
-variable "cloudwatch_schedule" {
-  type = string
-  default = "rate(1 hour)"
-}
 
 variable "source_path" {
   type = string
@@ -38,4 +29,8 @@ variable "timeout" {
 variable "lambda_runtime" {
   type = string
   default = "python3.8"
+}
+
+variable "bucket_arn" {
+  type = string
 }

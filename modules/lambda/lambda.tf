@@ -1,11 +1,6 @@
-# S3 Bucket 생성
-resource "aws_s3_bucket" "lambda_bucket" {
-    bucket = var.bucket_name
-}
-
 # Lambda 역할 생성
 resource "aws_iam_role" "lambda_role" {
-  name = "lambda_execution_role"
+  name = "${var.service}_lambda_execution_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -36,7 +31,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
           "s3:ListBucket"
         ],
         Effect   = "Allow",
-        Resource = "${aws_s3_bucket.lambda_bucket.arn}/*"
+        Resource = "${var.bucket_arn}/*"
       },
       {
         Action   = "logs:*",

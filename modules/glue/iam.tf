@@ -1,5 +1,5 @@
 resource "aws_iam_role" "glue_service_role" {
-  name = "esia-glue_service_role"
+  name = "${var.service}-glue-service-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -17,7 +17,7 @@ resource "aws_iam_role" "glue_service_role" {
 
 # IAM 정책 생성
 resource "aws_iam_policy" "glue_policy" {
-  name        = "esia-glue-policy"
+  name        = "${var.service}-glue-policy"
   description = "Policy for Glue service to access S3 buckets"
   
   policy = jsonencode({

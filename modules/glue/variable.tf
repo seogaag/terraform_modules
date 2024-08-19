@@ -1,3 +1,8 @@
+variable "service" {
+  type = string
+  default = "esia"
+}
+
 variable "database_name" {
   description = "The name of the Glue database."
   type        = string
