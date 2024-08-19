@@ -63,5 +63,10 @@ predictor_input = {
 predictions = predictor.predict(predictor_input)
 print(predictions)
 
+# 예측 결과를 S3에 저장
+predictions_path = f'{output_path}predictions.json'
+s3 = boto3.client('s3')
+s3.put_object(Bucket=bucket_name, Key='deepar-output/predictions.json', Body=json.dumps(predictions))
+
 # 모델 배포 종료
 predictor.delete_endpoint()
