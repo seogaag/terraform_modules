@@ -12,6 +12,7 @@ variable "cloudwatch_schedule" {
   type = string
   default = "rate(1 hour)"
 }
+
 variable "lambda_function_arn" {
     type = string
 }
