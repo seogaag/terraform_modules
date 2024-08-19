@@ -1,27 +1,79 @@
+import sagemaker
+import boto3
+import pandas as pd
 import json
-import os
+from sagemaker import get_execution_role
+from datetime import datetime
 
-# 입력 및 출력 경로 설정
-input_data_path = '/opt/ml/processing/input'
-output_data_path = '/opt/ml/processing/output'
-output_file = os.path.join(output_data_path, 'processed_data.jsonl')
+# SageMaker 및 AWS 설정
+role = get_execution_role()
+session = sagemaker.Session()
+region = session.boto_region_name
+bucket = "esia-stock"
 
-# 출력 파일 열기
-with open(output_file, 'w') as outfile:
-    # 입력 디렉토리의 모든 파일에 대해 반복
-    for filename in os.listdir(input_data_path):
-        if filename.endswith('.json'):
-            input_file_path = os.path.join(input_data_path, filename)
+# S3 버킷 및 데이터 경로 설정
+s3_data_prefix = 'AAPL/'
+s3_data_path = f's3://{bucket}/{s3_data_prefix}'
+output_path = f's3://{bucket}/deepar-output/'
 
-            # 파일 읽기
-            with open(input_file_path, 'r') as infile:
-                raw_data = json.load(infile)
+# S3에서 데이터 불러오기
+s3 = boto3.client('s3')
 
-                # 각 데이터를 JSONLines 형식으로 변환하여 출력 파일에 쓰기
-                for entry in raw_data:
-                    processed_entry = {
-                        "start": entry["timestamp"],
-                        "target": [float(entry["close"])],
-                        "item_id": os.path.splitext(filename)[0]  # 파일명을 item_id로 사용
-                    }
-                    outfile.write(json.dumps(processed_entry) + '\n')
+def load_s3_json_lines(bucket, prefix):
+    all_data = []
+    response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+    for obj in response.get('Contents', []):
+        key = obj['Key']
+        if key.endswith('.json'):
+            response = s3.get_object(Bucket=bucket, Key=key)
+            data = response['Body'].read().decode('utf-8')
+            all_data.extend(json.loads(line) for line in data.splitlines())
+    return all_data
+
+data = load_s3_json_lines(bucket, s3_data_prefix)
+
+# 데이터프레임으로 변환
+df = pd.DataFrame(data)
+
+# # 타임스탬프를 사람이 읽을 수 있는 형식으로 변환 (밀리초 단위)
+# df['date'] = pd.to_datetime(df['date'], unit='ms')
+
+# 시계열 데이터 설정
+df.set_index('date', inplace=True)
+df = df[['close']]  # 'close' 가격만 사용
+
+# 리샘플링하여 시계열 데이터 준비 (시간 빈도에 맞게)
+df_resampled = df.resample('H').mean().dropna()
+
+# 훈련 데이터와 테스트 데이터로 분할
+train_size = int(len(df_resampled) * 0.8)
+train_data = df_resampled[:train_size]
+test_data = df_resampled[train_size:]
+
+# DeepAR 형식으로 변환
+def series_to_json_obj(ts, start):
+    return {
+        "start": str(start),
+        "target": list(ts)
+    }
+
+train_series = series_to_json_obj(train_data, train_data.index[0])
+test_series = series_to_json_obj(test_data, test_data.index[0])
+
+# JSON Lines 형식으로 저장
+train_json = json.dumps(train_series)
+test_json = json.dumps(test_series)
+
+# 로컬 파일로 저장
+with open('train.json', 'w') as f:
+    f.write(train_json + '\n')
+
+with open('test.json', 'w') as f:
+    f.write(test_json + '\n')
+
+# S3에 업로드
+train_s3_path = session.upload_data('train.json', bucket=bucket, key_prefix='deepar/data')
+test_s3_path = session.upload_data('test.json', bucket=bucket, key_prefix='deepar/data')
+
+print(f"Train data uploaded to: {train_s3_path}")
+print(f"Test data uploaded to: {test_s3_path}")

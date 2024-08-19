@@ -1,42 +1,67 @@
+import sagemaker
 import boto3
-import os
+from sagemaker.estimator import Estimator
+from sagemaker.predictor import Predictor
+from sagemaker.serializers import JSONSerializer
+from sagemaker.deserializers import JSONDeserializer
+from sagemaker import get_execution_role
 
-def main():
-    sagemaker_client = boto3.client('sagemaker', region_name='ap-south-1')
+# SageMaker 및 AWS 설정
+role = get_execution_role()
+session = sagemaker.Session()
+region = session.boto_region_name
 
-    response = sagemaker_client.create_training_job(
-        TrainingJobName=os.getenv('TRAINING_JOB_NAME'),
-        AlgorithmSpecification={
-            'TrainingImage': os.getenv('TRAINING_IMAGE'),
-            'TrainingInputMode': 'File'
-        },
-        InputDataConfig=[
-            {
-                'ChannelName': 'train',
-                'DataSource': {
-                    'S3DataSource': {
-                        'S3DataType': 'S3Prefix',
-                        'S3Uri': os.getenv('TRAINING_DATA_S3_URI')
-                    }
-                },
-                'ContentType': 'application/x-recordio'
-            }
-        ],
-        OutputDataConfig={
-            'S3OutputPath': os.getenv('MODEL_OUTPUT_S3_URI')
-        },
-        ResourceConfig={
-            'InstanceType': os.getenv('INSTANCE_TYPE'),
-            'InstanceCount': int(os.getenv('INSTANCE_COUNT')),
-            'VolumeSizeInGB': int(os.getenv('VOLUME_SIZE_IN_GB'))
-        },
-        RoleArn=os.getenv('SAGEMAKER_ROLE_ARN'),
-        StoppingCondition={
-            'MaxRuntimeInSeconds': int(os.getenv('MAX_RUNTIME_IN_SECONDS'))
-        }
-    )
 
-    print(response)
+bucket_name = 'esia-stock'
+s3_data_prefix = 'AAPL/'
+s3_data_path = f's3://{bucket_name}/{s3_data_prefix}'
+output_path = f's3://{bucket_name}/deepar-output/'
 
-if __name__ == '__main__':
-    main()
+# DeepAR 컨테이너 이미지 설정
+image_name = sagemaker.image_uris.retrieve('forecasting-deepar', region)
+
+# DeepAR 모델 설정
+estimator = Estimator(
+    image_uri=image_name,
+    role=role,
+    instance_count=1,
+    instance_type='ml.c4.xlarge',
+    output_path=output_path,
+    sagemaker_session=session
+)
+
+# 하이퍼파라미터 설정
+estimator.set_hyperparameters(
+    time_freq='H',  # 시계열 빈도 (시간)
+    epochs=20,
+    early_stopping_patience=10,
+    mini_batch_size=32,
+    learning_rate=0.001,
+    context_length=48,  # 예측에 사용할 이전 데이터 포인트 수
+    prediction_length=24,  # 예측할 시간 간격 수
+    num_layers=3,
+    num_cells=40,
+    cell_type='lstm'
+)
+
+# 모델 훈련
+estimator.fit({'train': train_s3_path, 'test': test_s3_path})
+
+# 모델 배포
+predictor = estimator.deploy(
+    initial_instance_count=1,
+    instance_type='ml.m4.xlarge',
+    serializer=JSONSerializer(),
+    deserializer=JSONDeserializer()
+)
+
+# 예측 수행
+predictor_input = {
+    "instances": [test_series]
+}
+
+predictions = predictor.predict(predictor_input)
+print(predictions)
+
+# 모델 배포 종료
+predictor.delete_endpoint()

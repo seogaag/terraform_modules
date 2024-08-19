@@ -3,3 +3,7 @@ variable "region" {
   default = "ap-south-1"
 }
 
+variable "service" {
+  type = string
+  default = "esia"
+}
