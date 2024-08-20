@@ -5,5 +5,5 @@ variable "region" {
 
 variable "service" {
   type = string
-  default = "esia"
+  default = "esia-test"
 }

@@ -138,19 +138,19 @@
 # ##################
 
 # ## SAGEMAKER
-# module "sagemaker" {
-#   source = "../modules/sagemaker"
+module "sagemaker" {
+  source = "../modules/sagemaker"
 
-#   service = local.service
+  service = "esia"
 
-#   # s3_key = "script/data_processing.py"
-#   # s3_sourcepath = "../source/data_processing.py"
-#   # image_uri = "683313688378.dkr.ecr.us-west-2.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3"
-#   # container_entrypoint = [ "python3" ]
-#   # container_arguments = [ "../source/data_processing.py" ]
+  # s3_key = "script/data_processing.py"
+  # s3_sourcepath = "../source/data_processing.py"
+  # image_uri = "683313688378.dkr.ecr.us-west-2.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3"
+  # container_entrypoint = [ "python3" ]
+  # container_arguments = [ "../source/data_processing.py" ]
 
-#   domain_vpc_id = module.vpc.vpc_id
-#   domain_subnet_ids = [ module.vpc.sub_pub_a_id, module.vpc.sub_pub_c_id ]
+  domain_vpc_id = module.vpc.vpc_id
+  domain_subnet_ids = [ module.vpc.sub_pub_a_id, module.vpc.sub_pub_c_id ]
 
-#   depends_on = [ module.vpc ]
-# }
+  depends_on = [ module.vpc ]
+}

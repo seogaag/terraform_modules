@@ -8,7 +8,6 @@ variable "lambda_function_name" {
   type        = string
 }
 
-
 variable "source_path" {
   type = string
   default = "../source"
@@ -32,5 +31,14 @@ variable "lambda_runtime" {
 }
 
 variable "bucket_arn" {
+  type = string
+}
+
+variable "lamda_layer_arns" {
+  type = list(string)
+  default = [  ]
+}
+
+variable "lambda_file_name" {
   type = string
 }
