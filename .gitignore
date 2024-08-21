@@ -10,4 +10,4 @@ source/bastionhost.sh
 .tfstate.lock.info
 .terraform.lock.hcl
 
-.source/lambda_collector
+.source/lambda_collector/*
