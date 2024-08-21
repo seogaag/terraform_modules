@@ -141,7 +141,7 @@
 module "sagemaker" {
   source = "../modules/sagemaker"
 
-  service = "esia"
+  service = "esia-test"
 
   # s3_key = "script/data_processing.py"
   # s3_sourcepath = "../source/data_processing.py"
@@ -152,5 +152,7 @@ module "sagemaker" {
   domain_vpc_id = module.vpc.vpc_id
   domain_subnet_ids = [ module.vpc.sub_pub_a_id, module.vpc.sub_pub_c_id ]
 
+  sage_bucket = aws_s3_bucket.s3_stock.bucket
+  sage_bucket_arn = aws_s3_bucket.s3_stock.arn
   depends_on = [ module.vpc ]
 }

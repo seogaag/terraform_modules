@@ -45,7 +45,7 @@ resource "aws_subnet" "sub_prv_nat_a" {
   vpc_id = aws_vpc.my_vpc.id
   cidr_block = cidrsubnet(var.vpc_cidr, 3,2)
   availability_zone = "${var.region}a"
-  map_public_ip_on_launch = true
+  # map_public_ip_on_launch = true
   tags = {
     Name = var.subnet_names[2]
     "kubernetes.io/role/internal-elb" = "1"
@@ -55,7 +55,7 @@ resource "aws_subnet" "sub_prv_nat_c" {
   vpc_id = aws_vpc.my_vpc.id
   cidr_block = cidrsubnet(var.vpc_cidr, 3,3)
   availability_zone = "${var.region}c"
-  map_public_ip_on_launch = true
+  # map_public_ip_on_launch = true
   tags = {
     Name = var.subnet_names[3]
     "kubernetes.io/role/internal-elb" = "1"
@@ -67,7 +67,7 @@ resource "aws_subnet" "sub_prv_a" {
   vpc_id = aws_vpc.my_vpc.id
   cidr_block = cidrsubnet(var.vpc_cidr, 3,4)
   availability_zone = "${var.region}a"
-  map_public_ip_on_launch = true
+  # map_public_ip_on_launch = true
   tags = {
     Name = var.subnet_names[4]
   }
@@ -76,7 +76,7 @@ resource "aws_subnet" "sub_prv_c" {
   vpc_id = aws_vpc.my_vpc.id
   cidr_block = cidrsubnet(var.vpc_cidr, 3,5)
   availability_zone = "${var.region}c"
-  map_public_ip_on_launch = true
+  # map_public_ip_on_launch = true
   tags = {
     Name = var.subnet_names[5]
   }

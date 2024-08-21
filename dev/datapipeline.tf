@@ -56,6 +56,20 @@ resource "aws_s3_object" "s3_stock_raw_data" {
 #   role     = aws_iam_role.lambda_execution_role.name
 # }
 
+module "lambda_collector" {
+  source = "../modules/lambda"
+
+  service = "esia-col"
+  bucket_arn = aws_s3_bucket.s3_stock.arn
+  source_path = "../source"
+  lambda_function_name = "ESIA_collector"
+  lambda_file_name = "lambda_collector"
+  lamda_layer_arns = ["arn:aws:lambda:ap-south-1:336392948345:layer:AWSSDKPandas-Python38:24"]
+  lambda_env = {
+    API_KEY="QE0t8vHW3Ndx82q30U_qiZMOQc0kRrl6"
+  }
+}
+
 module "lambda_preprocess" {
   source = "../modules/lambda"
 
@@ -69,8 +83,7 @@ module "lambda_preprocess" {
     BUCKET_NAME = aws_s3_bucket.s3_stock.bucket
     PREFIXES_LIST ="AAPL/, NVDA/"
   }
-  memory_size = 256
-  timeout = 60
+
 }
 
 module "lambda_training" {
@@ -85,8 +98,6 @@ module "lambda_training" {
     BUCKET_NAME = aws_s3_bucket.s3_stock.bucket
     SAGEMAKER_ROLE = module.sagemaker.sagemaker_role_arn
   }
-  memory_size = 256
-  timeout = 60
   
 }
 
@@ -106,40 +117,49 @@ module "lambda_training" {
 #   runtime          = "python3.8"
 # }
 
-resource "aws_sfn_state_machine" "workflow" {
-  name     = "ModelTrainingAndEvaluation"
-  role_arn  = module.lambda_training.lambda_role_arn
+# resource "aws_sfn_state_machine" "workflow" {
+#   name     = "ModelTrainingAndEvaluation"
+#   role_arn  = module.lambda_training.lambda_role_arn
 
-  definition = jsonencode({
-    Comment = "State machine to preprocess data, train and evaluate model",
-    StartAt = "PreprocessData",
-    States = {
-      PreprocessData = {
-        Type = "Task",
-        Resource = module.lambda_preprocess.lambda_function_arn,
-        Next = "TrainModel",
-        Parameters: {
-          "companies": ["AAPL", "NVDA"]
-        }
-      },
-      TrainModel = {
-        Type = "Task",
-        Resource = module.lambda_training.lambda_function_arn,
-        # Next = "EvaluateModel",
-        Parameters: {
-          "companies": ["AAPL", "NVDA"]
-        }
-      }
-#       EvaluateModel = {
+#   definition = jsonencode({
+#     Comment = "State machine to preprocess data, train and evaluate model",
+#     StartAt = "CollectData",
+#     States = {
+#       CollectData = {
 #         Type = "Task",
-#         Resource = aws_lambda_function.model_evaluation.arn,
-#         End = true
-#       },
-#       GeneratePrediction = {
-#         Type = "Task",
-#         Resource = aws_lambda_function.model_inference.arn,
-#         End = true
+#         Resource = module.lambda_collector.lambda_function_arn
+#         Next = "ProprocessData",
+#         Parameters: {
+#           "companies": ["AAPL", "NVDA"]
+#         }
 #       }
-    }
-  })
-}
+#       PreprocessData = {
+#         Type = "Task",
+#         Resource = module.lambda_preprocess.lambda_function_arn,
+#         Next = "TrainModel",
+#         Parameters: {
+#           "companies": ["AAPL", "NVDA"]
+#         }
+#       },
+#       TrainModel = {
+#         Type = "Task",
+#         Resource = module.lambda_training.lambda_function_arn,
+#         # Next = "EvaluateModel",
+#         Parameters: {
+#           "companies": ["AAPL", "NVDA"]
+#         }
+#         End = True
+#       }
+# #       EvaluateModel = {
+# #         Type = "Task",
+# #         Resource = aws_lambda_function.model_evaluation.arn,
+# #         End = true
+# #       },
+# #       GeneratePrediction = {
+# #         Type = "Task",
+# #         Resource = aws_lambda_function.model_inference.arn,
+# #         End = true
+# #       }
+#     }
+#   })
+# }

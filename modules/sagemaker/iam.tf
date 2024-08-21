@@ -29,8 +29,8 @@ resource "aws_iam_policy" "sagemaker_policy" {
           "s3:ListBucket"
         ]
         Resource = [
-          "${aws_s3_bucket.sagemaker_bucket.arn}",
-          "${aws_s3_bucket.sagemaker_bucket.arn}/*"
+          "${var.sage_bucket_arn}",
+          "${var.sage_bucket_arn}/*"
         ]
       },
       {
@@ -41,6 +41,11 @@ resource "aws_iam_policy" "sagemaker_policy" {
           "logs:PutLogEvents"
         ]
         Resource = "*"
+      },
+      {
+        Effect: "Allow",
+        Action: "iam:PassRole",
+        Resource: "*"
       },
       {
         Effect = "Allow"
@@ -79,7 +84,7 @@ resource "aws_iam_policy" "sagemaker_policy" {
       }
     ]
   })
-  depends_on = [ aws_s3_bucket.sagemaker_bucket ]
+  # depends_on = [ aws_s3_bucket.sagemaker_bucket ]
 }
 
 resource "aws_iam_role_policy_attachment" "sagemaker_role_policy_attachment" {

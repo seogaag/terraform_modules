@@ -19,10 +19,12 @@ variable "lambda_env" {
 
 variable "memory_size" {
   type = number
+  default = 256
 }
 
 variable "timeout" {
   type = number
+  default = 60
 }
 
 variable "lambda_runtime" {
