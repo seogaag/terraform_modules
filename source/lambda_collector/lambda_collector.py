@@ -1,6 +1,6 @@
 import requests
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
 
@@ -10,10 +10,12 @@ def handler(event, context):
 
     # API 요청 URL 설정
     for ticker in companies:
-        today_date = datetime.now().strftime("%Y-%m-%d")
+        today_date = datetime.now()
+        yesterday = today_date - timedelta(days=1)
+        yester_date = yesterday.strftime("%Y-%m-%d")
         # start_date = "2024-07-01"
         # end_date = "2024-08-30"
-        url = f"https://api.polygon.io/v2/aggs/ticker/{ticker}/range/5/minute/{today_date}/{today_date}?adjusted=true&sort=asc&limit=50000&apiKey={api_key}"
+        url = f"https://api.polygon.io/v2/aggs/ticker/{ticker}/range/5/minute/{yester_date}/{yester_date}?adjusted=true&sort=asc&limit=50000&apiKey={api_key}"
 
         # API 요청
         response = requests.get(url)

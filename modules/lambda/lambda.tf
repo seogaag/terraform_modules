@@ -11,6 +11,13 @@ resource "aws_iam_role" "lambda_role" {
         Principal = {
           Service = "lambda.amazonaws.com"
         }
+      },
+      {
+        Effect: "Allow",
+        Principal: {
+          Service: "states.amazonaws.com"
+        },
+        Action: "sts:AssumeRole"
       }
     ]
   })
@@ -28,7 +35,8 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Action = [
           "s3:PutObject",
           "s3:GetObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:*"
         ],
         Effect   = "Allow",
         Resource = "${var.bucket_arn}/*"
@@ -41,7 +49,17 @@ resource "aws_iam_role_policy" "lambda_policy" {
         ],
         Effect   = "Allow",
         Resource = "*"
-      }
+      },
+      {
+        Effect: "Allow",
+        Action: "iam:PassRole",
+        Resource: "arn:aws:iam::381492185710:role/esia-test_sagemaker_role"
+      },
+      {
+        Effect: "Allow",
+        Action: "lambda:InvokeFunction",
+        Resource: "arn:aws:lambda:ap-south-1:381492185710:function:*"
+      } 
     ]
   })
 }

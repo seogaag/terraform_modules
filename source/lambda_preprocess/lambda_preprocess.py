@@ -1,7 +1,9 @@
+
 import boto3
 import pandas as pd
 import io
 import os
+import json
 
 def handler(event, context):
     s3 = boto3.client('s3')
@@ -62,16 +64,32 @@ def handler(event, context):
         eval_df = all_data[all_data['date'] > split_date]
         
         # S3 저장 경로 지정
-        train_key = f"{processed_prefix}train.csv"
-        eval_key = f"{processed_prefix}eval.csv"
+        train_key = f"{processed_prefix}train.json"
+        eval_key = f"{processed_prefix}eval.json"
         
-        # CSV로 변환 및 S3에 업로드
-        csv_buffer = io.StringIO()
-        train_df.to_csv(csv_buffer, index=False)
-        s3.put_object(Bucket=bucket_name, Key=train_key, Body=csv_buffer.getvalue())
+        # JSON Lines 형식으로 변환 및 S3에 업로드
+        def save_json_lines_to_s3(df, s3_key):
+            json_buffer = io.StringIO()
+            for start, group_df in df.groupby(df['date'].dt.to_period('D')):
+                # Convert the 'start' timestamp and 'target' values
+                json_record = {
+                    "start": start.start_time.isoformat(),  # ISO 8601 포맷
+                    "target": group_df['close'].tolist(),  # 'close'를 'target'으로 사용
+                    # Add dynamic features if needed
+                    "dynamic_features": {
+                        "open": group_df['open'].tolist(),
+                        "high": group_df['high'].tolist(),
+                        "low": group_df['low'].tolist(),
+                        "volume": group_df['volume'].tolist(),
+                        "transactions": group_df['transactions'].tolist()
+                    }
+                }
+                json.dump(json_record, json_buffer)
+                json_buffer.write('\n')  # 각 객체를 새 줄로 구분
+            
+            s3.put_object(Bucket=bucket_name, Key=s3_key, Body=json_buffer.getvalue())
         
-        csv_buffer = io.StringIO()
-        eval_df.to_csv(csv_buffer, index=False)
-        s3.put_object(Bucket=bucket_name, Key=eval_key, Body=csv_buffer.getvalue())
+        save_json_lines_to_s3(train_df, train_key)
+        save_json_lines_to_s3(eval_df, eval_key)
     
-    return {'statusCode': 200, 'body': 'Data processed and saved'}
+    return {'statusCode': 200, 'body': 'Data processed and saved as JSON Lines'}

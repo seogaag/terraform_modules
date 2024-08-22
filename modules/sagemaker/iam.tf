@@ -1,5 +1,5 @@
 resource "aws_iam_role" "sagemaker_role" {
-  name = "${var.service}_sagemaker_role"
+  name = "${var.service}-sagemaker-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -16,7 +16,7 @@ resource "aws_iam_role" "sagemaker_role" {
 }
 
 resource "aws_iam_policy" "sagemaker_policy" {
-  name = "${var.service}_sagemaker_policy"
+  name = "${var.service}-sagemaker-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -29,6 +29,7 @@ resource "aws_iam_policy" "sagemaker_policy" {
           "s3:ListBucket"
         ]
         Resource = [
+          # "*"
           "${var.sage_bucket_arn}",
           "${var.sage_bucket_arn}/*"
         ]

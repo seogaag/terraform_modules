@@ -101,6 +101,29 @@ module "lambda_training" {
   
 }
 
+resource "aws_lambda_layer_version" "lambda_layer_numpy" {
+  description         = "Example lambda layer"
+  filename            = "../source/lambda_layer_numpy.zip"
+  layer_name          = "lambda_layer_numpy"
+  compatible_runtimes = ["python3.8"]
+  source_code_hash    = filebase64sha256("../source/lambda_layer_numpy.zip")
+}
+
+
+module "lambda_evaluation" {
+  source = "../modules/lambda"
+
+  service = "esia-eval"
+  bucket_arn = aws_s3_bucket.s3_stock.arn
+  source_path = "../source"
+  lambda_function_name = "ESIA_evaluation"
+  lambda_file_name = "lambda_evaluation"
+  lamda_layer_arns = [aws_lambda_layer_version.lambda_layer_numpy.arn]
+  lambda_env = {
+    BUCKET_NAME = aws_s3_bucket.s3_stock.bucket
+  }
+  timeout = 900
+}
 # resource "aws_lambda_function" "model_evaluation" {
 #   filename         = "../source/lambda_model_evaluation_payload.zip"
 #   function_name    = "ModelEvaluationFunction"
@@ -117,49 +140,53 @@ module "lambda_training" {
 #   runtime          = "python3.8"
 # }
 
-# resource "aws_sfn_state_machine" "workflow" {
-#   name     = "ModelTrainingAndEvaluation"
-#   role_arn  = module.lambda_training.lambda_role_arn
+resource "aws_sfn_state_machine" "workflow" {
+  name     = "ModelTrainingAndEvaluation"
+  role_arn  = module.lambda_training.lambda_role_arn
 
-#   definition = jsonencode({
-#     Comment = "State machine to preprocess data, train and evaluate model",
-#     StartAt = "CollectData",
-#     States = {
-#       CollectData = {
+  definition = jsonencode({
+    Comment = "State machine to preprocess data, train and evaluate model",
+    StartAt = "CollectData",
+    States = {
+      CollectData = {
+        Type = "Task",
+        Resource = module.lambda_collector.lambda_function_arn
+        Next = "PreprocessData",
+        Parameters: {
+          "companies": ["AAPL", "NVDA"]
+        }
+      }
+      PreprocessData = {
+        Type = "Task",
+        Resource = module.lambda_preprocess.lambda_function_arn,
+        Next = "TrainModel",
+        Parameters: {
+          "companies": ["AAPL", "NVDA"]
+        }
+      },
+      TrainModel = {
+        Type = "Task",
+        Resource = module.lambda_training.lambda_function_arn,
+        Next = "EvaluateModel",
+        Parameters: {
+          "companies": ["AAPL", "NVDA"]
+        }
+      },
+      EvaluateModel = {
+        Type = "Task",
+        Resource = module.lambda_evaluation.lambda_function_arn,
+        End = true
+      }
+#       GeneratePrediction = {
 #         Type = "Task",
-#         Resource = module.lambda_collector.lambda_function_arn
-#         Next = "ProprocessData",
-#         Parameters: {
-#           "companies": ["AAPL", "NVDA"]
-#         }
+#         Resource = aws_lambda_function.model_inference.arn,
+#         End = true
 #       }
-#       PreprocessData = {
-#         Type = "Task",
-#         Resource = module.lambda_preprocess.lambda_function_arn,
-#         Next = "TrainModel",
-#         Parameters: {
-#           "companies": ["AAPL", "NVDA"]
-#         }
-#       },
-#       TrainModel = {
-#         Type = "Task",
-#         Resource = module.lambda_training.lambda_function_arn,
-#         # Next = "EvaluateModel",
-#         Parameters: {
-#           "companies": ["AAPL", "NVDA"]
-#         }
-#         End = True
-#       }
-# #       EvaluateModel = {
-# #         Type = "Task",
-# #         Resource = aws_lambda_function.model_evaluation.arn,
-# #         End = true
-# #       },
-# #       GeneratePrediction = {
-# #         Type = "Task",
-# #         Resource = aws_lambda_function.model_inference.arn,
-# #         End = true
-# #       }
-#     }
-#   })
-# }
+    }
+  })
+  depends_on = [ 
+    module.lambda_collector, 
+    module.lambda_preprocess, 
+    module.lambda_training,
+    module.lambda_evaluation ]
+}

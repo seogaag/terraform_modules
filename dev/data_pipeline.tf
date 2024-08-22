@@ -149,10 +149,10 @@ module "sagemaker" {
   # container_entrypoint = [ "python3" ]
   # container_arguments = [ "../source/data_processing.py" ]
 
-  domain_vpc_id = module.vpc.vpc_id
-  domain_subnet_ids = [ module.vpc.sub_pub_a_id, module.vpc.sub_pub_c_id ]
+  # domain_vpc_id = module.vpc.vpc_id
+  # domain_subnet_ids = [ module.vpc.sub_pub_a_id, module.vpc.sub_pub_c_id ]
 
   sage_bucket = aws_s3_bucket.s3_stock.bucket
   sage_bucket_arn = aws_s3_bucket.s3_stock.arn
-  depends_on = [ module.vpc ]
+  # depends_on = [ module.vpc ]
 }
