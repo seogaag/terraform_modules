@@ -29,9 +29,9 @@ resource "aws_iam_policy" "sagemaker_policy" {
           "s3:ListBucket"
         ]
         Resource = [
-          # "*"
-          "${var.sage_bucket_arn}",
-          "${var.sage_bucket_arn}/*"
+          "*"
+          # "${var.sage_bucket_arn}",
+          # "${var.sage_bucket_arn}/*"
         ]
       },
       {

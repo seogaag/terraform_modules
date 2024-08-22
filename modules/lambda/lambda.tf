@@ -1,6 +1,6 @@
 # Lambda 역할 생성
 resource "aws_iam_role" "lambda_role" {
-  name = "${var.service}_lambda_role"
+  name = "${var.service}-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -25,7 +25,7 @@ resource "aws_iam_role" "lambda_role" {
 
 # Lambda 역할 정책 생성
 resource "aws_iam_role_policy" "lambda_policy" {
-  name   = "${var.service}_lambda_policy"
+  name   = "${var.service}-lambda-policy"
   role   = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
@@ -42,24 +42,22 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Resource = "${var.bucket_arn}/*"
       },
       {
-        Action   = [
+        Action = [
           "s3:*",
           "logs:*",
-          "sagemaker:*"
+          "sagemaker:*",
+          "lambda:InvokeFunction",
+          "states:*",
+          "events:*"
         ],
         Effect   = "Allow",
         Resource = "*"
       },
       {
-        Effect: "Allow",
         Action: "iam:PassRole",
-        Resource: "arn:aws:iam::381492185710:role/esia-test_sagemaker_role"
-      },
-      {
         Effect: "Allow",
-        Action: "lambda:InvokeFunction",
-        Resource: "arn:aws:lambda:ap-south-1:381492185710:function:*"
-      } 
+        Resource: "${var.sagemaker_role_arn}" # "arn:aws:iam::381492185710:role/esia-test-j-sagemaker-role"
+      }
     ]
   })
 }

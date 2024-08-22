@@ -44,3 +44,7 @@ variable "lamda_layer_arns" {
 variable "lambda_file_name" {
   type = string
 }
+
+variable "sagemaker_role_arn" {
+  type = string
+}

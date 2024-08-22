@@ -8,13 +8,15 @@ import json
 def handler(event, context):
     s3 = boto3.client('s3')
     bucket_name = os.environ['BUCKET_NAME']
-    prefixes = os.environ['PREFIXES_LIST'].split(', ')
+    # prefixes = os.environ['PREFIXES_LIST'].split(', ')
+    companies = event['companies']
+    results = {"companies": []}
     
-    for prefix in prefixes:
+    for company in companies:
         all_data_frames = []
         
-        raw_prefix = f'raw/{prefix}'
-        processed_prefix = f'processed/{prefix}'
+        raw_prefix = f'raw/{company}/'
+        processed_prefix = f'processed/{company}/'
         
         # 주어진 prefix에 해당하는 모든 파일 리스트 가져오기
         response = s3.list_objects_v2(Bucket=bucket_name, Prefix=raw_prefix)
@@ -91,5 +93,6 @@ def handler(event, context):
         
         save_json_lines_to_s3(train_df, train_key)
         save_json_lines_to_s3(eval_df, eval_key)
-    
-    return {'statusCode': 200, 'body': 'Data processed and saved as JSON Lines'}
+
+        results["companies"].append(company)
+    return results

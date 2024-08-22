@@ -9,12 +9,14 @@ def handler(event, context):
     companies = event['companies']
     today_date = datetime.now().strftime("%Y-%m-%d")
     # companies = ['AAPL','NVDA']
-    
+    job_names = []
     for company in companies:
 
+        training_job_name = f'ESIATrainingJob-{company}-{today_date}214'
+        job_names.append(training_job_name)
         # SageMaker 트레이닝 작업 시작
         response = sagemaker.create_training_job(
-            TrainingJobName=f'ESIATrainingJob-{company}-{today_date}',
+            TrainingJobName=training_job_name,
             AlgorithmSpecification={
                 'TrainingImage': '991648021394.dkr.ecr.ap-south-1.amazonaws.com/forecasting-deepar:latest',
                 'TrainingInputMode': 'File'
@@ -51,4 +53,7 @@ def handler(event, context):
             }
         )
         
-    return event
+    return {
+        "statusCode": 200,
+        "TrainingJobNames": job_names
+    }
