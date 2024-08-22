@@ -2,11 +2,17 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 import os
+import boto3
 
 
 def handler(event, context):
     api_key = os.environ['API_KEY']
     companies = event['companies']
+    # bucket_name = os.environ['BUCKET_NAME']
+    bucket_name = "esia-stock-test"
+    
+    s3_client = boto3.client('s3')
+
 
     # API 요청 URL 설정
     for ticker in companies:
@@ -41,9 +47,16 @@ def handler(event, context):
         # 필요없는 열 삭제 (원래의 't' 열 등)
         df.drop(columns=['t', 'vw'], inplace=True)
 
-        # 폴더 생성 (존재하지 않으면)
-        output_dir = f'./{ticker}/'
+        # '/tmp' 디렉터리 사용
+        output_dir = f'/tmp/{ticker}/'
         os.makedirs(output_dir, exist_ok=True)
 
-        output_file = os.path.join(output_dir, f'{today_date}.json')
+        output_file = os.path.join(output_dir, f'{yester_date}.json')
         df.to_json(output_file, orient='records', lines=True)
+
+        # S3에 파일 업로드
+        s3_key = f'raw/{ticker}/{yester_date}.json'
+        s3_client.upload_file(output_file, bucket_name, s3_key)
+
+        # /tmp 디렉터리의 파일 삭제 (선택적)
+        os.remove(output_file)
