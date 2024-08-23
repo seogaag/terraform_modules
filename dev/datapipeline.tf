@@ -66,6 +66,7 @@ module "lambda_collector" {
   lambda_file_name = "lambda_collector"
   lamda_layer_arns = ["arn:aws:lambda:ap-south-1:336392948345:layer:AWSSDKPandas-Python38:24"]
   lambda_env = {
+    BUCKET_NAME = aws_s3_bucket.s3_stock.bucket
     API_KEY="QE0t8vHW3Ndx82q30U_qiZMOQc0kRrl6"
   }
   sagemaker_role_arn = module.sagemaker.sagemaker_role_arn
@@ -82,7 +83,7 @@ module "lambda_preprocess" {
   lamda_layer_arns = ["arn:aws:lambda:ap-south-1:336392948345:layer:AWSSDKPandas-Python38:24"]
   lambda_env = {
     BUCKET_NAME = aws_s3_bucket.s3_stock.bucket
-    PREFIXES_LIST ="AAPL/, NVDA/"
+    # PREFIXES_LIST ="AAPL/, NVDA/"
   }
 
   sagemaker_role_arn = module.sagemaker.sagemaker_role_arn

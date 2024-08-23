@@ -8,8 +8,10 @@ import boto3
 def handler(event, context):
     api_key = os.environ['API_KEY']
     companies = event['companies']
-    # bucket_name = os.environ['BUCKET_NAME']
-    bucket_name = "esia-stock-test"
+    # companies = ['AAPL', 'NVDA']
+    bucket_name = os.environ['BUCKET_NAME']
+    # bucket_name = "esia-stock-test"
+    
     
     s3_client = boto3.client('s3')
 

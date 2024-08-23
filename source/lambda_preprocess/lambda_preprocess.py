@@ -9,7 +9,8 @@ def handler(event, context):
     s3 = boto3.client('s3')
     bucket_name = os.environ['BUCKET_NAME']
     # prefixes = os.environ['PREFIXES_LIST'].split(', ')
-    companies = event['companies']
+    # companies = event['companies']
+    companies = ['AAPL','NVDA']
     results = {"companies": []}
     
     for company in companies:
@@ -61,7 +62,7 @@ def handler(event, context):
         all_data = pd.concat(all_data_frames)
         
         # 훈련 및 평가 데이터로 나누기 (예: 80% 훈련, 20% 평가)
-        split_date = all_data['date'].max() - pd.DateOffset(days=30)  # 최근 30일을 평가 데이터로 사용
+        split_date = all_data['date'].max() - pd.DateOffset(days=1)  # 최근 30일을 평가 데이터로 사용
         train_df = all_data[all_data['date'] <= split_date]
         eval_df = all_data[all_data['date'] > split_date]
         
@@ -74,17 +75,26 @@ def handler(event, context):
             json_buffer = io.StringIO()
             for start, group_df in df.groupby(df['date'].dt.to_period('D')):
                 # Convert the 'start' timestamp and 'target' values
+                # dynamic_feature = []
+                
+                # dynamic_feature.append(group_df['open'].tolist())
+                # dynamic_feature.append(group_df['high'].tolist())
+                # dynamic_feature.append(group_df['low'].tolist())
+                # dynamic_feature.append(group_df['volume'].tolist())
+                # dynamic_feature.append(group_df['transactions'].tolist())
+                
                 json_record = {
                     "start": start.start_time.isoformat(),  # ISO 8601 포맷
-                    "target": group_df['close'].tolist(),  # 'close'를 'target'으로 사용
+                    "target": group_df['close'].tolist()  # 'close'를 'target'으로 사용
                     # Add dynamic features if needed
-                    "dynamic_features": {
-                        "open": group_df['open'].tolist(),
-                        "high": group_df['high'].tolist(),
-                        "low": group_df['low'].tolist(),
-                        "volume": group_df['volume'].tolist(),
-                        "transactions": group_df['transactions'].tolist()
-                    }
+                    # "dynamic_features": 
+                    #     # dynamic_feature
+                    #     "open": group_df['open'].tolist,
+                    #     "high": group_df['high'].tolist,
+                    #     "low": group_df['low'].tolist,
+                    #     "volume": group_df['volume'].tolist,
+                    #     "transactions": group_df['transactions'].tolist
+                    
                 }
                 json.dump(json_record, json_buffer)
                 json_buffer.write('\n')  # 각 객체를 새 줄로 구분

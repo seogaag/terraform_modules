@@ -1,6 +1,6 @@
 import boto3
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def handler(event, context):
     sagemaker = boto3.client('sagemaker')
@@ -8,11 +8,13 @@ def handler(event, context):
     role_arn = os.environ['SAGEMAKER_ROLE']
     companies = event['companies']
     today_date = datetime.now().strftime("%Y-%m-%d")
+    yesterday = datetime.now() - timedelta(days=1)
+    yester_date = yesterday.strftime("%Y-%m-%d")
     # companies = ['AAPL','NVDA']
     job_names = []
     for company in companies:
 
-        training_job_name = f'ESIATrainingJob-{company}-{today_date}214'
+        training_job_name = f'ESIATrainingJob-{company}-{yester_date}'
         job_names.append(training_job_name)
         # SageMaker 트레이닝 작업 시작
         response = sagemaker.create_training_job(
