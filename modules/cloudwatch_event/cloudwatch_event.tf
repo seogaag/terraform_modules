@@ -4,16 +4,17 @@ resource "aws_cloudwatch_event_rule" "cloudwatch_event_rule" {
   schedule_expression = var.cloudwatch_schedule
 }
 
-resource "aws_cloudwatch_event_target" "lambda_target" {
+# CloudWatch Events 규칙과 Step Function을 연결
+resource "aws_cloudwatch_event_target" "cloudwatch_function" {
   rule      = aws_cloudwatch_event_rule.cloudwatch_event_rule.name
-  arn       = var.lambda_function_arn
-
+  arn       = var.cloudwatch_event_target_arn
+  role_arn  = aws_iam_role.cloudwatch_role.arn
 }
 
-# Lambda 함수 권한 추가
-resource "aws_lambda_permission" "allow_cloudwatch" {
-  action        = "lambda:InvokeFunction"
-  function_name = var.lambda_function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.cloudwatch_event_rule.arn
-}
+# # Lambda 함수 권한 추가
+# resource "aws_lambda_permission" "allow_cloudwatch" {
+#   action        = "lambda:InvokeFunction"
+#   function_name = var.lambda_function_name
+#   principal     = "events.amazonaws.com"
+#   source_arn    = aws_cloudwatch_event_rule.cloudwatch_event_rule.arn
+# }

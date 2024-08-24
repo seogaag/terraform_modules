@@ -12,7 +12,6 @@ def handler(event, context):
     bucket_name = os.environ['BUCKET_NAME']
     # bucket_name = "esia-stock-test"
     
-    
     s3_client = boto3.client('s3')
 
 

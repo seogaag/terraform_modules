@@ -14,8 +14,8 @@ def handler(event, context):
     
     bucket_name = os.environ['BUCKET_NAME']
     role_arn = os.environ['SAGEMAKER_ROLE']
-    # companies = event['companies']
-    companies = ['AAPL','NVDA']
+    companies = event['companies']
+    # companies = ['AAPL','NVDA']
     # training_job_names = event['TraingJobNames']
     
     def model_exists(sagemaker_client, model_name):
@@ -140,10 +140,10 @@ def handler(event, context):
         yyester_date = yyesterday.strftime("%Y-%m-%d")
 
         # SageMaker 엔드포인트 이름
-        current_model_endpoint_name = f'{company}-forecasting-endpoint-{yyester_date}01'
-        current_model_name = f'{company}-deepAR-{yyester_date}01'
-        current_endpoint_config_name = f'{company}-endpoint-config-{yyester_date}01'
-        current_training_job_name = f'ESIATrainingJob-{company}-{yyester_date}803'
+        current_model_endpoint_name = f'{company}-forecasting-endpoint-{yyester_date}'
+        current_model_name = f'{company}-deepAR-{yyester_date}'
+        current_endpoint_config_name = f'{company}-endpoint-config-{yyester_date}'
+        current_training_job_name = f'ESIATrainingJob-{company}-{yyester_date}'
         
         create_model(current_model_name, current_training_job_name, current_endpoint_config_name, current_model_endpoint_name)
         create_endpoint(current_model_name, current_endpoint_config_name, current_model_endpoint_name)
@@ -228,10 +228,10 @@ def handler(event, context):
                 return None, None
         
         # 새 모델을 평가할 때 사용하는 엔드포인트 이름
-        new_model_endpoint_name = f'{company}-forecasting-endpoint-{yester_date}01'
-        new_model_name = f'{company}-deepAR-{yester_date}01'
-        new_model_endpoint_config_name = f'{company}-endpoint-config-{yester_date}01'
-        new_training_job_name = f'ESIATrainingJob-{company}-{yester_date}803'
+        new_model_endpoint_name = f'{company}-forecasting-endpoint-{yester_date}'
+        new_model_name = f'{company}-deepAR-{yester_date}'
+        new_model_endpoint_config_name = f'{company}-endpoint-config-{yester_date}'
+        new_training_job_name = f'ESIATrainingJob-{company}-{yester_date}'
 
         create_model(new_model_name, new_training_job_name, new_model_endpoint_config_name, new_model_endpoint_name)
         create_endpoint(new_model_name, new_model_endpoint_config_name, new_model_endpoint_name)

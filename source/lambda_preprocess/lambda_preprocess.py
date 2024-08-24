@@ -9,8 +9,8 @@ def handler(event, context):
     s3 = boto3.client('s3')
     bucket_name = os.environ['BUCKET_NAME']
     # prefixes = os.environ['PREFIXES_LIST'].split(', ')
-    # companies = event['companies']
-    companies = ['AAPL','NVDA']
+    companies = event['companies']
+    # companies = ['AAPL','NVDA']
     results = {"companies": []}
     
     for company in companies:
