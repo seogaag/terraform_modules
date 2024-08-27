@@ -1,10 +1,8 @@
 import boto3
 import json
 import os
-import datetime
-import time
 from datetime import datetime, timedelta
-
+import time
 from botocore.exceptions import ClientError
 
 def handler(event, context):
@@ -15,8 +13,6 @@ def handler(event, context):
     bucket_name = os.environ['BUCKET_NAME']
     role_arn = os.environ['SAGEMAKER_ROLE']
     companies = event['companies']
-    # companies = ['AAPL','NVDA']
-    # training_job_names = event['TraingJobNames']
     
     def model_exists(sagemaker_client, model_name):
         try:
@@ -60,13 +56,11 @@ def handler(event, context):
                 raise Exception(f"Endpoint {endpoint_name} failed with status: {status}")
             else:
                 print(f"Current status: {status}. Waiting...")
-                time.sleep(30)  # 30초 후에 다시 확인
+                time.sleep(30)
     
     def create_model(model_name, training_job_name, model_artifact, image_uri):
-        sagemaker = boto3.client('sagemaker')
-        
         if model_exists(sagemaker, model_name):
-            print("Model is exists... Skip creating")
+            print("Model exists... Skip creating")
         else:
             response = sagemaker.create_model(
                 ModelName=model_name,
@@ -76,10 +70,8 @@ def handler(event, context):
                 },
                 ExecutionRoleArn=role_arn
             )
-
+    
     def create_endpoint(model_name, endpoint_config_name, endpoint_name):
-        
-        sagemaker = boto3.client('sagemaker')
         if not endpoint_config_exists(sagemaker, endpoint_config_name):
             try:
                 response = sagemaker.create_endpoint_config(
@@ -112,148 +104,130 @@ def handler(event, context):
             )
             print(f"Endpoint {endpoint_name} creation started.")
             wait_for_endpoint_in_service(sagemaker, endpoint_name)
-
+    
     def calculate_mae(predicted_values, actual_values):
-        # 입력이 리스트가 아닌 경우, 리스트로 변환
-
-        # if len(predicted_values) == 0 or len(actual_values) == 0:
-        #     return None
-        
-        # if len(predicted_values) > len(actual_values):
-        #     predicted_values = predicted_values[:len(actual_values)]
         actual_values = actual_values.get('target')[0]
-        
-        # MAE 계산
-        # absolute_errors = [abs(float(p) - float(a)) for p, a in zip(predicted_values, actual_values)
         absolute_errors = [abs(predicted_values - actual_values)]
-        
         mae = sum(absolute_errors) / len(absolute_errors)
         return mae
-
+    
+    def get_eval_target_data(company):
+        s3_key = f'processed/{company}/eval.json'
+        try:
+            response = s3.get_object(Bucket=bucket_name, Key=s3_key)
+            file_content = response['Body'].read().decode('utf-8')
+            eval_instances = json.loads(file_content)
+            return eval_instances
+        except Exception as e:
+            print(f"Error fetching eval data: {str(e)}")
+            return []
+    
+    def get_actual_values(company):
+        try:
+            s3_key = f'processed/{company}/eval.json'
+            response = s3.get_object(Bucket=bucket_name, Key=s3_key)
+            file_content = response['Body'].read().decode('utf-8')
+            data = json.loads(file_content)
+            actual_datas = {
+                "start": data['start'],
+                "target": data['target']
+            }
+            return actual_datas
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON: {e}")
+            return []
+        except Exception as e:
+            print(f"Error fetching actual values: {str(e)}")
+            return []
+    
+    def evaluate_model(endpoint_name, eval_instance):
+        try:
+            response = sagemaker_runtime.invoke_endpoint(
+                EndpointName=endpoint_name,
+                ContentType='application/json',
+                Body=json.dumps(eval_instance)
+            )
+            response_body = response['Body'].read().decode('utf-8')
+            predicted_result = json.loads(response_body)
+            predicted_values = predicted_result['predictions'][0]['mean'][0]
+            return predicted_values
+        except Exception as e:
+            print(f"Error evaluating model {endpoint_name}: {str(e)}")
+            return None
+    
+    def save_prediction_to_s3(company, prediction):
+        s3_key = f'predictions/{company}/prediction-{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.json'
+        try:
+            s3.put_object(Bucket=bucket_name, Key=s3_key, Body=json.dumps(prediction))
+            print(f"Prediction for {company} saved to {s3_key}")
+        except Exception as e:
+            print(f"Error saving prediction to S3: {str(e)}")
+    
+    def get_best_model_info():
+        try:
+            s3_key = 'best_model_info.json'
+            response = s3.get_object(Bucket=bucket_name, Key=s3_key)
+            file_content = response['Body'].read().decode('utf-8')
+            best_model_info = json.loads(file_content)
+            return best_model_info
+        except Exception as e:
+            print(f"Error fetching best model info: {str(e)}")
+            return None
+    
+    def update_best_model_info(new_best_model_info):
+        s3_key = 'best_model_info.json'
+        try:
+            s3.put_object(Bucket=bucket_name, Key=s3_key, Body=json.dumps(new_best_model_info))
+            print(f"Best model info updated to {s3_key}")
+        except Exception as e:
+            print(f"Error updating best model info: {str(e)}")
+    
     for company in companies:
-        # today_date = datetime.now().strftime("%Y-%m-%d")
-        
-        yesterday = datetime.now() - timedelta(days=2)
+        yesterday = datetime.now() - timedelta(days=1)
         yester_date = yesterday.strftime("%Y-%m-%d")
-
-        yyesterday = datetime.now() - timedelta(days=3)
-        yyester_date = yyesterday.strftime("%Y-%m-%d")
-
-        # SageMaker 엔드포인트 이름
-        current_model_endpoint_name = f'{company}-forecasting-endpoint-{yyester_date}'
-        current_model_name = f'{company}-deepAR-{yyester_date}'
-        current_endpoint_config_name = f'{company}-endpoint-config-{yyester_date}'
-        current_training_job_name = f'ESIATrainingJob-{company}-{yyester_date}'
+        
+        current_model_endpoint_name = f'{company}-forecasting-endpoint-{yester_date}'
+        current_model_name = f'{company}-deepAR-{yester_date}'
+        current_endpoint_config_name = f'{company}-endpoint-config-{yester_date}'
+        current_training_job_name = f'ESIATrainingJob-{company}-{yester_date}'
         
         create_model(current_model_name, current_training_job_name, current_endpoint_config_name, current_model_endpoint_name)
         create_endpoint(current_model_name, current_endpoint_config_name, current_model_endpoint_name)
-        
-        # 오늘 날짜
-        # today_date_time = datetime.now().strftime("%Y-%m-%dT00:00:00")
-        
-        def get_eval_target_data():
-            s3_key = f'processed/{company}/eval.json'
-            try:
-                response = s3.get_object(Bucket=bucket_name, Key=s3_key)
-                file_content = response['Body'].read().decode('utf-8')
-                
-                # JSON 배열로 파싱
-                eval_instances = json.loads(file_content)
-                
-                return eval_instances
-        
-            except Exception as e:
-                print(f"Error fetching eval data: {str(e)}")
-                return []
-            
-        
-        
-        # 평가 데이터 생성 (예시)
-        start_data = get_eval_target_data()
+
         eval_instance = {
             "instances": [
                 {
-                    "start": start_data.get("start"),
+                    "start": get_eval_target_data(company).get("start"),
                     "target": []    
                 }
             ]
-           
         }
         
-        # 평가할 데이터 가져오기
-        def get_actual_values():
-            try:
-                s3_key = f'processed/{company}/eval.json'
-                response = s3.get_object(Bucket=bucket_name, Key=s3_key)
-                file_content = response['Body'].read().decode('utf-8')
-                # JSON 배열로 파싱
-                data = json.loads(file_content)
-                actual_datas = {
-                    "start": data['start'],
-                    "target": data['target']
-                }
-                return actual_datas
-            except json.JSONDecodeError as e:
-                print(f"Error decoding JSON: {e}")
-                return []
-            except Exception as e:
-                print(f"Error fetching actual values: {str(e)}")
-                return []
+        actual_values = get_actual_values(company)
         
-        actual_values = get_actual_values()
+        best_model_info = get_best_model_info()
+        best_model_mae = best_model_info.get("best_mae") if best_model_info else float('inf')
+        best_model_endpoint = best_model_info.get("best_model_endpoint") if best_model_info else None
         
-        # 모델 평가 함수
-        def evaluate_model(endpoint_name):
-            try:
-                response = sagemaker_runtime.invoke_endpoint(
-                    EndpointName=endpoint_name,
-                    ContentType='application/json',
-                    Body=json.dumps(eval_instance)
-                )
-                
-                # 응답 처리
-                response_body = response['Body'].read().decode('utf-8')
-                # 예측값 추출
-                predicted_result = json.loads(response_body)
-                print(predicted_result['predictions'][0]['mean'][0])
-                predicted_values = predicted_result['predictions'][0]['mean'][0]
-                
-                # MAE 계산
-                mae = calculate_mae(predicted_values, actual_values)
-                
-                return mae, predicted_values
-            
-            except Exception as e:
-                print(f"Error evaluating model {endpoint_name}: {str(e)}")
-                return None, None
+        new_model_predictions = evaluate_model(current_model_endpoint_name, eval_instance)
+        new_model_mae = calculate_mae(new_model_predictions, actual_values)
         
-        # 새 모델을 평가할 때 사용하는 엔드포인트 이름
-        new_model_endpoint_name = f'{company}-forecasting-endpoint-{yester_date}'
-        new_model_name = f'{company}-deepAR-{yester_date}'
-        new_model_endpoint_config_name = f'{company}-endpoint-config-{yester_date}'
-        new_training_job_name = f'ESIATrainingJob-{company}-{yester_date}'
-
-        create_model(new_model_name, new_training_job_name, new_model_endpoint_config_name, new_model_endpoint_name)
-        create_endpoint(new_model_name, new_model_endpoint_config_name, new_model_endpoint_name)
-        
-        # 새 모델과 현재 모델 평가
-        new_model_mae, new_model_predictions = evaluate_model(new_model_endpoint_name)
-        current_model_mae, current_model_predictions = evaluate_model(current_model_endpoint_name)
-        
-        # 성능 비교 및 모델 결정
-        if new_model_mae is not None and (current_model_mae is None or new_model_mae < current_model_mae):
-            chosen_endpoint = new_model_endpoint_name
-            best_mae = new_model_mae
-        else:
+        if new_model_mae < best_model_mae:
             chosen_endpoint = current_model_endpoint_name
-            best_mae = current_model_mae
-
-        print(json.dumps({
+            best_mae = new_model_mae
+            update_best_model_info({
+                "best_model_endpoint": chosen_endpoint,
+                "best_mae": best_mae
+            })
+        else:
+            chosen_endpoint = best_model_endpoint
+            best_mae = best_model_mae
+        
+        prediction = {
             "selected_endpoint": chosen_endpoint,
             "best_mae": best_mae,
             "new_model_mae": new_model_mae,
-            "current_model_mae": current_model_mae,
-            "new_model_predictions": new_model_predictions,
-            "current_model_predictions": current_model_predictions
-        }))
-
+            "current_model_predictions": new_model_predictions
+        }
+        
+        save_prediction_to_s3(company, prediction)
