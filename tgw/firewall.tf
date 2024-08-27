@@ -7,16 +7,16 @@ resource "aws_networkfirewall_rule_group" "rule_group" {
   rule_group {
     rules_source {
       dynamic "stateful_rule" {
-        for_each = var.ips
+        for_each = var.protocols
         content {
           action = "PASS"
           header {
             destination = "ANY"
             destination_port = "ANY"
-            protocol = "HTTP" # + IP, SSH
+            protocol = stateful_rule.value # "HTTP" # + IP, SSH
             direction = "ANY"
             source_port = "ANY"
-            source = stateful_rule.value
+            source = var.ips
           }
           rule_option {
             keyword = "sid"
@@ -49,24 +49,37 @@ resource "aws_networkfirewall_firewall" "networkfirewall" {
   vpc_id = aws_vpc.vpc-network.id
   firewall_policy_arn = aws_networkfirewall_firewall_policy.firewall_policy.arn
   subnet_mapping {
-    subnet_id = aws_subnet.sub_Firewall_A.id
+    subnet_id = aws_subnet.sub_firewall_a.id
   }
 }
 
-resource "aws_s3_bucket" "networkfirewall_log" {
-  bucket = "s3-${var.service}-networkfirewall-log"
+resource "aws_s3_bucket" "networkfirewall_log_FLOW" {
+  bucket = "s3-${local.service}-networkfirewall-log-FLOW"
 }
+resource "aws_s3_bucket" "networkfirewall_log_ALERT" {
+  bucket = "s3-${local.service}-networkfirewall-log-ALERT"
+}
+
 
 resource "aws_networkfirewall_logging_configuration" "logging" {
   firewall_arn = aws_networkfirewall_firewall.networkfirewall.arn
   logging_configuration {
     log_destination_config {
       log_destination = {
-        bucketName = aws_s3_bucket.networkfirewall_log.bucket
+        bucketName = aws_s3_bucket.networkfirewall_log_FLOW.bucket
         prefix     = "/"
       }
       log_destination_type = "S3"
       log_type             = "FLOW"
+    }
+
+    log_destination_config {
+      log_destination = {
+        bucketName = aws_s3_bucket.networkfirewall_log_ALERT.bucket
+        prefix = "/"
+      }
+      log_destination_type = "S3"
+      log_type = "ALERT"
     }
   }
 }

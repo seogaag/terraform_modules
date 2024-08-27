@@ -6,11 +6,28 @@ variable "region_2" {
   default = "ap-south-1"
 }
 
+variable "region_3" {
+  # main
+  default = "us-west-1"
+}
+
 variable "ips" {
-  default = ["10.1.0.0/16", "100.64.0.0/26",
-             "10.2.0.0/16", "100.64.1.0/26"]
+  default = ["10.0.0.0/8"]
 }
 
 variable "protocols" {
+  default = ["HTTP", "SSH", "IP"]
+}
+
+variable "service" {
+  default = "esia"
+}
+
+locals {
+  service = "esia"
+}
+
+variable "protocols" {
+  type = list(string)
   default = ["HTTP", "SSH", "IP"]
 }
