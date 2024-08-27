@@ -28,8 +28,10 @@ resource "aws_subnet" "sub_sh_tgw" {
 resource "aws_route_table" "rt-shared-prv" {
   vpc_id = aws_vpc.vpc-shared.id
   route {
+    cidr_block = "10.1.0.0/16"
     transit_gateway_id = aws_ec2_transit_gateway.tgw-2.id
   }
+  
   tags = {
     Name = "RT-${local.service}-SHARED"
   }

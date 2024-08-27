@@ -96,6 +96,10 @@ resource "aws_route_table" "rt-PRIVATE" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_nat_gateway.ngw_a.id
   }
+  route {
+    cidr_block = "10.0.0.0/16"
+    transit_gateway_id = aws_ec2_transit_gateway.tgw-1.id
+  }
   tags = {
     Name = "RT-${local.service}-PRIVATE-NETWORK"
   }

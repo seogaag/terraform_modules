@@ -54,6 +54,7 @@ resource "aws_subnet" "sub_main_tgw_c" {
 resource "aws_route_table" "rt-main-prv" {
   vpc_id = aws_vpc.vpc-main.id
   route {
+    cidr_block = "10.2.0.0/16"
     transit_gateway_id = aws_ec2_transit_gateway.tgw-3.id
   }
   tags = {
