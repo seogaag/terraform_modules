@@ -7,8 +7,8 @@ import boto3
 
 def handler(event, context):
     api_key = os.environ['API_KEY']
-    companies = event['companies']
-    # companies = ['AAPL', 'NVDA']
+    # companies = event['companies']
+    companies = ['AAPL', 'NVDA']
     bucket_name = os.environ['BUCKET_NAME']
     # bucket_name = "esia-stock-test"
     
@@ -18,11 +18,11 @@ def handler(event, context):
     # API 요청 URL 설정
     for ticker in companies:
         today_date = datetime.now()
-        yesterday = today_date - timedelta(days=1)
-        yester_date = yesterday.strftime("%Y-%m-%d")
-        # start_date = "2024-07-01"
-        # end_date = "2024-08-30"
-        url = f"https://api.polygon.io/v2/aggs/ticker/{ticker}/range/5/minute/{yester_date}/{yester_date}?adjusted=true&sort=asc&limit=50000&apiKey={api_key}"
+        # yesterday = today_date - timedelta(days=1)
+        # yester_date = yesterday.strftime("%Y-%m-%d")
+        start_date = "2024-07-01"
+        end_date = "2024-08-30"
+        url = f"https://api.polygon.io/v2/aggs/ticker/{ticker}/range/5/minute/{start_date}/{end_date}?adjusted=true&sort=asc&limit=50000&apiKey={api_key}"
 
         # API 요청
         response = requests.get(url)
@@ -52,11 +52,11 @@ def handler(event, context):
         output_dir = f'/tmp/{ticker}/'
         os.makedirs(output_dir, exist_ok=True)
 
-        output_file = os.path.join(output_dir, f'{yester_date}.json')
+        output_file = os.path.join(output_dir, f'{start_date}_{end_date}.json')
         df.to_json(output_file, orient='records', lines=True)
 
         # S3에 파일 업로드
-        s3_key = f'raw/{ticker}/{yester_date}.json'
+        s3_key = f'raw/{ticker}/{start_date}_{end_date}.json'
         s3_client.upload_file(output_file, bucket_name, s3_key)
 
         # /tmp 디렉터리의 파일 삭제 (선택적)
