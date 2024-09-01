@@ -11,3 +11,5 @@ source/bastionhost.sh
 .terraform.lock.hcl
 
 .source/lambda_collector/*
+.source/lambda_precollector/*
+.source/data/*
