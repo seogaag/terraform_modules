@@ -15,15 +15,8 @@ module "vpc-network" {
                   "10.3.0.0/16",
                   "10.4.0.0/16" ]
   account_name = "network"
-  access_key = "a"
-  secret_key = "a"
-}
-
-
-provider "aws" {
-  alias = "security"
-
-  region = "ap-south-1"
+  # access_key = "a"
+  # secret_key = "a"
 }
 
 module "vpc-security" {
@@ -31,6 +24,7 @@ module "vpc-security" {
 
   vpc_cidr_block = "192.118.0.0/16"
   account_name = "security"
+  region = "ap-south-1"
   access_key = "a"
   secret_key = "a"
 }

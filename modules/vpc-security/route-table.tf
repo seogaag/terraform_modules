@@ -26,8 +26,8 @@ resource "aws_route_table_association" "rt-tgw-asso1" {
   route_table_id = aws_route_table.rt-tgw.id
 }
 
-# resource "aws_vpc_endpoint_subnet_association" "rt-tgw-asso2" {
-#   vpc_endpoint_id = aws_networkfirewall_firewall.networkfirewall.firewall_status.sync_states.attachment.endpoint_id
-#   subnet_id = aws_subnet.sub_tgw.id
-# #   route_table_id = aws_route_table.rt-tgw.id
-# }
+resource "aws_vpc_endpoint_subnet_association" "rt-tgw-asso2" {
+  vpc_endpoint_id = aws_networkfirewall_firewall.networkfirewall.firewall_status[0]["attachment"]["endpoint_id"]
+  subnet_id = aws_subnet.sub_tgw.id
+#   route_table_id = aws_route_table.rt-tgw.id
+}
